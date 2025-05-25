@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.pyc
+
+# Logs
+*.log
+
+# Omgevingsvariabelen
+.env
+api/.env
+
+# IDE bestanden
+.vscode/
