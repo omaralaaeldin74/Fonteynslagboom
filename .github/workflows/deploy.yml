@@ -1,0 +1,28 @@
+name: Deploy to Azure Container App
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Log in to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Build and deploy to Azure Container App
+      uses: azure/container-apps-deploy-action@v1
+      with:
+        appSourcePath: ./
+        containerAppName: slagboomapi
+        resourceGroup: SlagboomApp
+        imageToBuild: ghcr.io/${{ github.repository }}:latest
+        registryUrl: ghcr.io
