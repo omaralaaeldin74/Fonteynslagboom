@@ -9,7 +9,6 @@ import logging
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
 
-# ✅ Loggingconfiguratie – alleen belangrijke gebeurtenissen
 logging.basicConfig(
     level=logging.INFO,
     format='[%(asctime)s] %(message)s',
@@ -17,24 +16,19 @@ logging.basicConfig(
 )
 logger = logging.getLogger()
 
-# ❌ Onderdruk overbodige logs van externe libraries
 for lib in ["azure", "urllib3", "azure.identity", "azure.core", "flask", "werkzeug"]:
     logging.getLogger(lib).setLevel(logging.WARNING)
 
-# ✅ Laad .env bestand
 load_dotenv()
 
-# ✅ Haal Key Vault naam uit omgeving
 KEYVAULT_NAME = os.getenv("KEYVAULT_NAME")
 if not KEYVAULT_NAME:
     raise EnvironmentError("KEYVAULT_NAME is niet ingesteld als omgevingsvariabele.")
 
-# ✅ Stel URI en client in
 KV_URI = f"https://{KEYVAULT_NAME}.vault.azure.net"
 credential = DefaultAzureCredential()
 secret_client = SecretClient(vault_url=KV_URI, credential=credential)
 
-# ✅ Secret ophalen
 def get_secret(name):
     try:
         value = secret_client.get_secret(name).value
@@ -44,7 +38,6 @@ def get_secret(name):
         logger.error(f"❌ Fout bij ophalen secret '{name}': {e}")
         raise RuntimeError(f"Secret '{name}' kon niet worden opgehaald.")
 
-# ✅ Databaseconfig
 DB_CONFIG = {
     'host': get_secret("DBHOST"),
     'user': get_secret("DBUSER"),
@@ -53,11 +46,9 @@ DB_CONFIG = {
     'ssl_ca': get_secret("DBSSLPATH")
 }
 
-# ✅ Flask setup
 app = Flask(__name__)
 CORS(app, origins="*", methods=["GET", "POST", "OPTIONS"], allow_headers="*")
 
-# ✅ Functie: logboek bijwerken
 def voeg_toe_aan_logboek(kenteken):
     try:
         tijdstip = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -101,7 +92,6 @@ def voeg_toe_aan_logboek(kenteken):
         logger.error(f"❌ Onbekende fout in logboekregistratie: {e}")
         raise e
 
-# ✅ Functie: logboek ophalen
 def haal_logboek_op():
     try:
         conn = mysql.connector.connect(**DB_CONFIG)
@@ -117,7 +107,6 @@ def haal_logboek_op():
         logger.error(f"❌ Onbekende fout bij ophalen logboek: {e}")
         raise e
 
-# ✅ Endpoint: POST naar slagboom
 @app.route('/api/slagboom', methods=['POST', 'OPTIONS'])
 def slagboom():
     if request.method == 'OPTIONS':
@@ -137,7 +126,6 @@ def slagboom():
         logger.error(f"❌ Onbekende fout in endpoint /slagboom: {e}")
         return jsonify({"message": "Er is een fout opgetreden bij toegang"}), 500
 
-# ✅ Endpoint: logboek ophalen
 @app.route('/api/logboek', methods=['GET', 'OPTIONS'])
 def logboek():
     if request.method == 'OPTIONS':
@@ -152,6 +140,5 @@ def logboek():
         logger.error(f"❌ Onbekende fout logboek: {e}")
         return jsonify({"message": "Er is een fout opgetreden bij het ophalen van het logboek"}), 500
 
-# ✅ Start app lokaal
 if __name__ == '__main__':
     app.run(debug=True, port=5000, host='127.0.0.1')
