@@ -18,6 +18,9 @@ jobs:
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+    - name: Log in to GitHub Container Registry
+      run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
     - name: Build and deploy to Azure Container App
       uses: azure/container-apps-deploy-action@v1
       with:
