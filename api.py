@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS
+from flask_cors import CORS  # ✅ Zorgt voor toegestane cross-origin requests
 from datetime import datetime
 from dotenv import load_dotenv
 import mysql.connector
@@ -9,6 +9,7 @@ import logging
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
 
+# ✅ Logging
 logging.basicConfig(
     level=logging.INFO,
     format='[%(asctime)s] %(message)s',
@@ -16,11 +17,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger()
 
-for lib in ["azure", "urllib3", "azure.identity", "azure.core", "flask", "werkzeug"]:
-    logging.getLogger(lib).setLevel(logging.WARNING)
-
+# ✅ Laad .env bestand
 load_dotenv()
 
+# ✅ Key Vault config
 KEYVAULT_NAME = os.getenv("KEYVAULT_NAME")
 if not KEYVAULT_NAME:
     raise EnvironmentError("KEYVAULT_NAME is niet ingesteld als omgevingsvariabele.")
@@ -31,12 +31,10 @@ secret_client = SecretClient(vault_url=KV_URI, credential=credential)
 
 def get_secret(name):
     try:
-        value = secret_client.get_secret(name).value
-        logger.info(f"✅ Secret '{name}' succesvol opgehaald.")
-        return value
+        return secret_client.get_secret(name).value
     except Exception as e:
-        logger.error(f"❌ Fout bij ophalen secret '{name}': {e}")
-        raise RuntimeError(f"Secret '{name}' kon niet worden opgehaald.")
+        logger.error(f"❌ Kan secret '{name}' niet ophalen uit Key Vault: {e}")
+        raise RuntimeError(f"Configuratiefout: secret '{name}' kon niet worden opgehaald.")
 
 DB_CONFIG = {
     'host': get_secret("DBHOST"),
@@ -46,14 +44,14 @@ DB_CONFIG = {
     'ssl_ca': get_secret("DBSSLPATH")
 }
 
+# ✅ Flask + CORS config
 app = Flask(__name__)
-CORS(app, origins="*", methods=["GET", "POST", "OPTIONS"], allow_headers="*")
+CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
 
 def voeg_toe_aan_logboek(kenteken):
     try:
         tijdstip = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         conn = mysql.connector.connect(**DB_CONFIG)
-        logger.info("✅ Verbinding met database succesvol.")
         cursor = conn.cursor()
 
         cursor.execute("SELECT naam FROM gasten WHERE kenteken = %s", (kenteken,))
@@ -89,7 +87,7 @@ def voeg_toe_aan_logboek(kenteken):
         logger.error(f"❌ Databasefout: {db_err}")
         raise ConnectionError("Databaseverbinding mislukt")
     except Exception as e:
-        logger.error(f"❌ Onbekende fout in logboekregistratie: {e}")
+        logger.error(f"❌ Onbekende fout: {e}")
         raise e
 
 def haal_logboek_op():
@@ -101,10 +99,10 @@ def haal_logboek_op():
         conn.close()
         return rows
     except Error as db_err:
-        logger.error(f"❌ Databasefout bij ophalen logboek: {db_err}")
+        logger.error(f"❌ Databasefout bij ophalen: {db_err}")
         raise ConnectionError("Databaseverbinding mislukt")
     except Exception as e:
-        logger.error(f"❌ Onbekende fout bij ophalen logboek: {e}")
+        logger.error(f"❌ Onbekende fout bij ophalen: {e}")
         raise e
 
 @app.route('/api/slagboom', methods=['POST', 'OPTIONS'])
@@ -122,8 +120,7 @@ def slagboom():
         return jsonify({"message": str(pe)}), 403
     except (ConnectionError, RuntimeError) as ce:
         return jsonify({"message": str(ce)}), 500
-    except Exception as e:
-        logger.error(f"❌ Onbekende fout in endpoint /slagboom: {e}")
+    except Exception:
         return jsonify({"message": "Er is een fout opgetreden bij toegang"}), 500
 
 @app.route('/api/logboek', methods=['GET', 'OPTIONS'])
@@ -134,11 +131,9 @@ def logboek():
         data = haal_logboek_op()
         return jsonify(data), 200
     except ConnectionError as ce:
-        logger.error(f"❌ Connectiefout logboek: {ce}")
         return jsonify({"message": str(ce)}), 500
-    except Exception as e:
-        logger.error(f"❌ Onbekende fout logboek: {e}")
+    except Exception:
         return jsonify({"message": "Er is een fout opgetreden bij het ophalen van het logboek"}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000, host='127.0.0.1')
+    app.run(debug=True, port=5000, host='0.0.0.0')
