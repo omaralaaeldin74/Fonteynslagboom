@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS  # ✅ Zorgt voor toegestane cross-origin requests
+from flask_cors import CORS  
 from datetime import datetime
 from dotenv import load_dotenv
 import mysql.connector
@@ -9,18 +9,16 @@ import logging
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
 
-# ✅ Logging
+# ✅ Logging naar stdout (dus zichtbaar in Azure)
 logging.basicConfig(
     level=logging.INFO,
-    format='[%(asctime)s] %(message)s',
-    handlers=[logging.FileHandler("slagboom.log")]
+    format='[%(asctime)s] %(message)s'
 )
 logger = logging.getLogger()
 
-# ✅ Laad .env bestand
+# ✅ .env laden
 load_dotenv()
 
-# ✅ Key Vault config
 KEYVAULT_NAME = os.getenv("KEYVAULT_NAME")
 if not KEYVAULT_NAME:
     raise EnvironmentError("KEYVAULT_NAME is niet ingesteld als omgevingsvariabele.")
@@ -44,7 +42,6 @@ DB_CONFIG = {
     'ssl_ca': get_secret("DBSSLPATH")
 }
 
-# ✅ Flask + CORS config
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
 
