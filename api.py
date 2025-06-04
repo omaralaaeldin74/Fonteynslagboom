@@ -8,7 +8,7 @@ import os
 import logging
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
-
+#gsgsgsgsg
 logging.basicConfig(
     level=logging.INFO,
     format='[%(asctime)s] %(message)s'
