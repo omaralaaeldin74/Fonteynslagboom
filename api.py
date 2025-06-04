@@ -1,19 +1,11 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS  
-from datetime import datetime
-from dotenv import load_dotenv
-import mysql.connector
-from mysql.connector import Error
-import os
 import logging
-import re  
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
 
+#gsgsgsgsg
 logging.basicConfig(
     level=logging.INFO,
-    format='[%(asctime)s] %(message)s',
-    handlers=[logging.FileHandler("slagboom.log")]
+    format='[%(asctime)s] %(message)s'
 )
 logger = logging.getLogger()
 
@@ -110,10 +102,6 @@ def slagboom():
     kenteken = data.get('kenteken', '').strip().upper()
     if not kenteken:
         return jsonify({"message": "Kenteken is verplicht"}), 400
-    if len(kenteken) < 6:
-        return jsonify({"message": "Kenteken moet minimaal 6 tekens bevatten."}), 400
-    if not re.match(r'^[A-Z\-]+$', kenteken):
-        return jsonify({"message": "Kenteken mag alleen hoofdletters en '-' bevatten."}), 400
     try:
         actie = voeg_toe_aan_logboek(kenteken)
         return jsonify({"message": f"{actie} geregistreerd voor {kenteken}"}), 200
