@@ -9,15 +9,14 @@ import logging
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
 
-# ✅ Logging
+
 logging.basicConfig(
     level=logging.INFO,
     format='[%(asctime)s] %(message)s',
-    handlers=[logging.FileHandler("slagboom.log")]
 )
 logger = logging.getLogger()
 
-# ✅ .env laden
+
 load_dotenv()
 
 KEYVAULT_NAME = os.getenv("KEYVAULT_NAME")
